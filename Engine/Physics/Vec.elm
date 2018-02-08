@@ -3,6 +3,10 @@ module Engine.Physics.Vec exposing (..)
 type alias Vec2 =
     { x: Float, y: Float }
 
+vec2: Float -> Float -> Vec2
+vec2 x y =
+    { x = x, y = y }
+
 add: Vec2 -> Vec2 -> Vec2
 add a b =
     { x = a.x + b.x, y = a.y + b.y }
