@@ -1,8 +1,8 @@
 module Engine.Physics.Collision exposing (..)
 
 import Engine.Physics.Vec as Vec exposing (Vec2)
-import Engine.Physics.Body exposing (..)
-import Engine.Physics.Fixtures exposing (..)
+import Engine.Physics.RigidBody exposing (..)
+import Engine.Physics.Fixtures as Fixtures exposing (Fixture)
 
 type alias Manifold = {
     a: RigidBody,
@@ -107,10 +107,10 @@ aabbVsCircle (a, mina, maxa) (b, posB, radius) =
 collisionCheck: RigidBody -> RigidBody -> Maybe Manifold
 collisionCheck a b =
     case a.fixture of 
-        (Circle posA radA) ->
+        (Fixtures.Circle posA radA) ->
             case b.fixture of 
-                (Circle posB radB) -> circleVsCircle (a, posA, radA) (b, posB, radB)
-                (AABB minb maxb) -> 
+                (Fixtures.Circle posB radB) -> circleVsCircle (a, posA, radA) (b, posB, radB)
+                (Fixtures.AABB minb maxb) -> 
                 -- Maintain order in is order out
                 let
                     man = aabbVsCircle (b, minb, maxb) (a, posA, radA)
@@ -118,22 +118,22 @@ collisionCheck a b =
                     case man of
                         Just m -> Just { m | a = m.b, b = m.a }
                         Nothing -> Nothing
-        (AABB mina maxa) ->
+        (Fixtures.AABB mina maxa) ->
             case b.fixture of
-                (Circle posB radB) -> aabbVsCircle (a, mina, maxa) (b, posB, radB)
-                (AABB minb maxb) -> aabbVsAABB (a, mina, maxa) (b, minb, maxb)
+                (Fixtures.Circle posB radB) -> aabbVsCircle (a, mina, maxa) (b, posB, radB)
+                (Fixtures.AABB minb maxb) -> aabbVsAABB (a, mina, maxa) (b, minb, maxb)
 
 positionalCorrection: Manifold -> Manifold
 positionalCorrection m =
     let
         percent = 0.2
-        correction = Vec.mult m.normal ((m.penetration / (m.a.invMass + m.b.invMass)) * percent)
+        correction = Vec.mult m.normal ((m.penetration / ((getInvMass m.a) + (getInvMass m.b))) * percent)
         a = m.a
         b = m.b
     in
         { m |
-            a = { a | fixture = setPosition a.fixture (Vec.sub (getPosition a.fixture) (Vec.mult correction a.invMass))},
-            b = { b | fixture = setPosition b.fixture (Vec.add (getPosition b.fixture) (Vec.mult correction b.invMass))}            
+            a = { a | fixture = Fixtures.setPosition a.fixture (Vec.sub (Fixtures.getPosition a.fixture) (Vec.mult correction (getInvMass a)))},
+            b = { b | fixture = Fixtures.setPosition b.fixture (Vec.add (Fixtures.getPosition b.fixture) (Vec.mult correction (getInvMass b)))}            
         }
 
 resolveCollision: Manifold -> Manifold
@@ -148,16 +148,16 @@ resolveCollision m =
             m
         else
             let
-                elasticity = min m.a.restitution m.b.restitution
+                elasticity = min m.a.material.restitution m.b.material.restitution
                 -- Impulse scalar
-                j = (-(1 + elasticity) * velAlongNormal) / (m.a.invMass + m.b.invMass)
+                j = (-(1 + elasticity) * velAlongNormal) / ((getInvMass m.a) + (getInvMass m.b))
                 impulse = Vec.mult m.normal j
                 a = m.a
                 b = m.a
             in
                 {m |
-                    a = {a | velocity = Vec.mult impulse (-m.a.invMass)},
-                    b = {b | velocity = Vec.mult impulse (m.b.invMass)}
+                    a = {a | velocity = Vec.mult impulse (-(getInvMass m.a))},
+                    b = {b | velocity = Vec.mult impulse ((getInvMass m.b))}
                 }
 
 

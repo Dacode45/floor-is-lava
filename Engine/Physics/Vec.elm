@@ -42,6 +42,10 @@ mult: Vec2 -> Float -> Vec2
 mult a b =
     { x = a.x * b, y = a.y * b}
 
+normal: Vec2 -> Vec2
+normal a = 
+    vec2 -a.y a.x
+
 normalize: Vec2 -> Vec2
 normalize a =
     let
@@ -59,3 +63,11 @@ normalize a =
 sub : Vec2 -> Vec2 -> Vec2
 sub a b =
     { x = (a.x - b.x), y = (a.y - b.y) }
+
+widthHeight: Vec2 -> Vec2 -> (Float, Float)
+widthHeight mina maxa =
+    let
+        w = maxa.x - mina.x
+        h = maxa.y - mina.y
+    in
+        (w, h)

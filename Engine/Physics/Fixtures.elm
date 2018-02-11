@@ -6,6 +6,14 @@ type Fixture =
     AABB Vec2 Vec2
     | Circle Vec2 Float
 
+circle: Vec2 -> Float -> Fixture
+circle pos r =
+    Circle pos r
+
+aabb: Vec2 -> Vec2 -> Fixture
+aabb a b =
+    AABB a b
+
 checkAABBwithAABB : (Vec2, Vec2) -> (Vec2, Vec2) -> Bool
 checkAABBwithAABB (mina, maxa) (minb, maxb) =
     if (maxa.x < minb.x || mina.x > maxb.x) then
@@ -51,3 +59,21 @@ getPosition f =
             Vec.midpoint maxa mina
         Circle pos _ ->
             pos
+
+getVolume: Fixture -> Float
+getVolume f =
+    case f of
+        AABB mina maxa ->
+            let
+                (w, h) = Vec.widthHeight mina maxa
+            in
+                w * h
+        Circle _ r -> pi * (r ^ 2)
+
+getMass: Fixture -> Float -> Float
+getMass f d =
+    d * (getVolume f)
+
+getInvMass: Fixture -> Float -> Float
+getInvMass f d =
+    1 / (getInvMass f d)
